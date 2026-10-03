@@ -50,7 +50,7 @@ if prompt := st.chat_input(
 
             # Submit job run
             run_response = requests.post(
-                f"{DATABRICKS_URL}/api/2.1/jobs/runs/submit",
+                f"{DATABRICKS_URL}/api/2.1/jobs/run-now",
                 headers=HEADERS,
                 json={
                     "job_id": JOB_ID,
