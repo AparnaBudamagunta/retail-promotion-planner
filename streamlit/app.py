@@ -87,19 +87,23 @@ if prompt := st.chat_input(
                 if life_cycle == "TERMINATED":
                     result_state = status["state"]["result_state"]
                     if result_state == "SUCCESS":
-                        # Get output
+                        # Get task run ID first
+                        tasks = status.get("tasks", [])
+                        if tasks:
+                            task_run_id = tasks[0]["run_id"]
+                        else:
+                            task_run_id = run_id
+
+                        # Get output using task run ID
                         output_response = requests.get(
                             f"{DATABRICKS_URL}/api/2.1/jobs/runs/get-output",
                             headers=HEADERS,
-                            params={"run_id": run_id}
+                            params={"run_id": task_run_id}
                         )
                         output_data = output_response.json()
-                        st.write("Debug output:", output_data)  # temporary debug
-                        # Try different output locations
                         plan = (
                             output_data.get("notebook_output", {}).get("result")
-                            or output_data.get("metadata", {}).get("notebook_output", {}).get("result")
-                            or str(output_data)[:500]
+                            or "No output returned"
                         )
                     else:
                         plan = "❌ Job failed. Please try again."
