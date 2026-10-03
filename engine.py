@@ -533,28 +533,19 @@ def build_section_1(
     lines = []
     lines.append("## SECTION 1 - RECOMMENDATION")
     lines.append("")
-    lines.append(f"**Goal:** {decisions.get('goal_statement', '')}")
-    lines.append(
-        f"**Event:** "
-        f"{context['event_details']['name'] if context.get('event_details') else 'No event'}"
-    )
+    lines.append(f"**Goal:** {decisions.get('goal_statement', '')}  ")
+    lines.append(f"**Event:** {context['event_details']['name'] if context.get('event_details') else 'No event'}  ")
     lines.append(
         f"**Promotion window:** "
         f"{context['event_details']['start_date'] if context.get('event_details') else 'TBD'}"
         f" to "
-        f"{context['event_details']['end_date'] if context.get('event_details') else 'TBD'}"
+        f"{context['event_details']['end_date'] if context.get('event_details') else 'TBD'}  "
     )
     budget = simulation['marketing_budget']
     if budget == 0:
-        lines.append(
-            "**Marketing budget:** Not specified "
-            "_(net gain shown is gross profit only)_"
-        )
+        lines.append("**Marketing budget:** Not specified _(net gain shown is gross profit only)_  ")
     else:
-        lines.append(
-            f"**Marketing budget:** "
-            f"{budget:,.0f} {currency}"
-        )
+        lines.append(f"**Marketing budget:** {budget:,.0f} {currency}  ")
     lines.append("")
 
     # Recommendation table
@@ -642,11 +633,11 @@ def build_section_2(
     lines.append("")
     lines.append(
         f"**Total products evaluated:** "
-        f"{simulation['total_evaluated']}"
+        f"{simulation['total_evaluated']}  "
     )
     lines.append(
         f"**Excluded:** "
-        f"{decisions.get('excluded_reasoning', '')}"
+        f"{decisions.get('excluded_reasoning', '')}  "
     )
     lines.append("")
     lines.append("**Selected Products:**")
@@ -854,11 +845,11 @@ def build_section_5(simulation: dict) -> str:
     lines.append("")
     lines.append(
         f"**Total units at risk:** "
-        f"{cs.get('total_units_lost', 0):,.1f}"
+        f"{cs.get('total_units_lost', 0):,.1f}  "
     )
     lines.append(
         f"**Total margin at risk:** "
-        f"{cs.get('total_margin_lost', 0):,.2f} {currency}"
+        f"{cs.get('total_margin_lost', 0):,.2f} {currency}  "
     )
     lines.append("")
 
@@ -1183,8 +1174,7 @@ def assemble_plan(
         simulation: dict,
         context: dict) -> str:
 
-    # Recalculate cannibalization using
-    # only LLM selected products
+    # Recalculate cannibalization
     cannibal_data = recalculate_cannibalization(
         decisions, simulation
     )
@@ -1206,7 +1196,18 @@ def assemble_plan(
         build_section_10(decisions),
     ]
 
-    return "\n\n---\n\n".join(sections)
+    plan = "\n\n---\n\n".join(sections)
+
+    # Fix line breaks for Streamlit rendering
+    # Bold fields on same line get separated
+    # import re
+    # plan = re.sub(
+    #     r'(\*\*[^*]+:\*\*[^\n]+)\n(\*\*)',
+    #     r'\1  \n\2',
+    #     plan
+    # )
+
+    return plan
 
 
 def recalculate_cannibalization(

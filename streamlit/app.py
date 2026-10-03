@@ -384,55 +384,55 @@ for msg in st.session_state["messages"]:
 
 
 # ── JOB RUNNER ─────────────────────────────────────────────────
-def run_job(prompt: str) -> str:
-    run_resp = requests.post(
-        f"{DATABRICKS_URL}/api/2.1/jobs/run-now",
-        headers=HEADERS,
-        json={
-            "job_id": JOB_ID,
-            "notebook_params": {"user_request": prompt}
-        }
-    )
+# def run_job(prompt: str) -> str:
+#     run_resp = requests.post(
+#         f"{DATABRICKS_URL}/api/2.1/jobs/run-now",
+#         headers=HEADERS,
+#         json={
+#             "job_id": JOB_ID,
+#             "notebook_params": {"user_request": prompt}
+#         }
+#     )
 
-    if run_resp.status_code != 200:
-        return f"❌ Could not start job: {run_resp.text}"
+#     if run_resp.status_code != 200:
+#         return f"❌ Could not start job: {run_resp.text}"
 
-    run_id = run_resp.json()["run_id"]
-    max_wait = 360
-    elapsed  = 0
+#     run_id = run_resp.json()["run_id"]
+#     max_wait = 360
+#     elapsed  = 0
 
-    while elapsed < max_wait:
-        time.sleep(10)
-        elapsed += 10
+#     while elapsed < max_wait:
+#         time.sleep(10)
+#         elapsed += 10
 
-        status_resp = requests.get(
-            f"{DATABRICKS_URL}/api/2.1/jobs/runs/get",
-            headers=HEADERS,
-            params={"run_id": run_id}
-        )
-        status = status_resp.json()
-        state  = status["state"]["life_cycle_state"]
+#         status_resp = requests.get(
+#             f"{DATABRICKS_URL}/api/2.1/jobs/runs/get",
+#             headers=HEADERS,
+#             params={"run_id": run_id}
+#         )
+#         status = status_resp.json()
+#         state  = status["state"]["life_cycle_state"]
 
-        if state == "TERMINATED":
-            if status["state"]["result_state"] == "SUCCESS":
-                tasks       = status.get("tasks", [])
-                task_run_id = tasks[0]["run_id"] \
-                    if tasks else run_id
-                out_resp = requests.get(
-                    f"{DATABRICKS_URL}/api/2.1/jobs/runs/get-output",
-                    headers=HEADERS,
-                    params={"run_id": task_run_id}
-                )
-                return out_resp.json().get(
-                    "notebook_output", {}
-                ).get("result", "No output returned.")
-            else:
-                return "❌ Job did not complete. Please try again."
+#         if state == "TERMINATED":
+#             if status["state"]["result_state"] == "SUCCESS":
+#                 tasks       = status.get("tasks", [])
+#                 task_run_id = tasks[0]["run_id"] \
+#                     if tasks else run_id
+#                 out_resp = requests.get(
+#                     f"{DATABRICKS_URL}/api/2.1/jobs/runs/get-output",
+#                     headers=HEADERS,
+#                     params={"run_id": task_run_id}
+#                 )
+#                 return out_resp.json().get(
+#                     "notebook_output", {}
+#                 ).get("result", "No output returned.")
+#             else:
+#                 return "❌ Job did not complete. Please try again."
 
-        elif state in ["INTERNAL_ERROR", "SKIPPED"]:
-            return "❌ An error occurred. Please try again."
+#         elif state in ["INTERNAL_ERROR", "SKIPPED"]:
+#             return "❌ An error occurred. Please try again."
 
-    return "⏱️ Request timed out. Please try again."
+#     return "⏱️ Request timed out. Please try again."
 
 
 # ── CHAT INPUT ─────────────────────────────────────────────────
@@ -457,21 +457,83 @@ if prompt:
         "Building your promotion plan...",
         expanded=True
     ) as status_box:
-        st.write("📡 Connecting to Databricks...")
-        time.sleep(1)
-        st.write("📦 Fetching your product catalog...")
-        time.sleep(1)
-        st.write("🧮 Running financial simulation...")
-        time.sleep(1)
-        st.write("🤖 AI making promotion decisions...")
+        
+        # Submit job first
+        st.write("📡 Submitting to Databricks...")
+        
+        run_resp = requests.post(
+            f"{DATABRICKS_URL}/api/2.1/jobs/run-now",
+            headers=HEADERS,
+            json={
+                "job_id": JOB_ID,
+                "notebook_params": {"user_request": prompt}
+            }
+        )
 
-        plan = run_job(prompt)
+        if run_resp.status_code != 200:
+            st.error(f"Could not start job: {run_resp.text}")
+            st.stop()
+
+        run_id = run_resp.json()["run_id"]
+        
+        # Poll with meaningful status updates
+        max_wait = 360
+        elapsed  = 0
+        plan     = None
+        step_shown = {
+            30:  "📦 Fetching your product catalog...",
+            60:  "🧮 Running financial simulation...",
+            90:  "🤖 AI making promotion decisions...",
+            120: "📝 Assembling your plan...",
+            150: "⏳ Almost there...",
+            180: "⏳ Finalising...",
+        }
+
+        while elapsed < max_wait:
+            time.sleep(10)
+            elapsed += 10
+
+            # Show progress message at key intervals
+            if elapsed in step_shown:
+                st.write(step_shown[elapsed])
+
+            status_resp = requests.get(
+                f"{DATABRICKS_URL}/api/2.1/jobs/runs/get",
+                headers=HEADERS,
+                params={"run_id": run_id}
+            )
+            status = status_resp.json()
+            state  = status["state"]["life_cycle_state"]
+
+            if state == "TERMINATED":
+                if status["state"]["result_state"] == "SUCCESS":
+                    tasks       = status.get("tasks", [])
+                    task_run_id = tasks[0]["run_id"] \
+                        if tasks else run_id
+                    out_resp = requests.get(
+                        f"{DATABRICKS_URL}/api/2.1/jobs/runs/get-output",
+                        headers=HEADERS,
+                        params={"run_id": task_run_id}
+                    )
+                    plan = out_resp.json().get(
+                        "notebook_output", {}
+                    ).get("result", "No output returned.")
+                else:
+                    plan = "❌ Job did not complete. Please try again."
+                break
+
+            elif state in ["INTERNAL_ERROR", "SKIPPED"]:
+                plan = "❌ An error occurred. Please try again."
+                break
+
+        if not plan:
+            plan = "⏱️ Request timed out. Please try again."
 
         st.write("✅ Plan ready.")
         status_box.update(
             label="Plan ready", state="complete"
         )
-
+        
     st.markdown(
         "<div class='plan-wrap'>",
         unsafe_allow_html=True
