@@ -93,9 +93,14 @@ if prompt := st.chat_input(
                             headers=HEADERS,
                             params={"run_id": run_id}
                         )
-                        plan = output_response.json().get(
-                            "notebook_output", {}
-                        ).get("result", "No output returned")
+                        output_data = output_response.json()
+                        st.write("Debug output:", output_data)  # temporary debug
+                        # Try different output locations
+                        plan = (
+                            output_data.get("notebook_output", {}).get("result")
+                            or output_data.get("metadata", {}).get("notebook_output", {}).get("result")
+                            or str(output_data)[:500]
+                        )
                     else:
                         plan = "❌ Job failed. Please try again."
                     break
