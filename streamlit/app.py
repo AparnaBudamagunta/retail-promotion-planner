@@ -481,12 +481,12 @@ if prompt:
         elapsed  = 0
         plan     = None
         step_shown = {
-            30:  "📦 Fetching your product catalog...",
-            60:  "🧮 Running financial simulation...",
-            90:  "🤖 AI making promotion decisions...",
-            120: "📝 Assembling your plan...",
-            150: "⏳ Almost there...",
-            180: "⏳ Finalising...",
+            10:  "📦 Fetching your product catalog...",
+            20:  "🧮 Running financial simulation...",
+            30:  "🤖 AI making promotion decisions...",
+            45: "📝 Assembling your plan...",
+            50: "⏳ Almost there...",
+            90: "⏳ Finalising...",
         }
 
         while elapsed < max_wait:
@@ -533,7 +533,7 @@ if prompt:
         status_box.update(
             label="Plan ready", state="complete"
         )
-        
+
     st.markdown(
         "<div class='plan-wrap'>",
         unsafe_allow_html=True
