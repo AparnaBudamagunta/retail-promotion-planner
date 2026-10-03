@@ -16,28 +16,28 @@ EXAMPLE_PROMPTS = [
     {
         "label": "🥤 Diwali Beverages",
         "prompt": "Build a promotion for beverages in India for Diwali. My marketing budget is 10000 INR.",
-        "desc":   "Seasonal promotion · India"
+        "desc":   "Seasonal · India"
     },
     {
-        "label": "🧴 FMCG Stock Clearance",
+        "label": "🧴 FMCG Clearance",
         "prompt": "I need to clear my FMCG stock in India before year end.",
-        "desc":   "Inventory clearance · India"
+        "desc":   "Clearance · India"
     },
     {
-        "label": "🖥️ Black Friday Electronics",
+        "label": "🖥️ Black Friday",
         "prompt": "Build a promotion for electronics in USA for Black Friday.",
         "desc":   "Peak event · USA"
     },
     {
-        "label": "🧼 Single Brand Diwali",
+        "label": "🧼 Brand Promotion",
         "prompt": "Build a promotion for Ariel in India for Diwali.",
-        "desc":   "Brand promotion · India"
+        "desc":   "Single brand · India"
     }
 ]
 
 # ── PAGE SETUP ─────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Promotion Planner",
+    page_title="AI Promotion Planner",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -46,11 +46,11 @@ st.set_page_config(
 # ── STYLES ─────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
-    background: #FAFAF8;
+    background: #FFFFFF;
 }
 
 #MainMenu {visibility: hidden;}
@@ -58,199 +58,204 @@ footer {visibility: hidden;}
 header {visibility: hidden;}
 
 .stApp {
-    background: #FAFAF8;
+    background: #F8F8FA;
 }
 
 /* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
-    background: #1A1A2E;
-    border-right: 2px solid #E8380D;
+    background: #1A0033;
+    border-right: 1px solid #2D0055;
 }
 
 [data-testid="stSidebar"] * {
-    color: #E8EAF0 !important;
+    color: #E8E0F0 !important;
 }
 
 [data-testid="stSidebar"] .stButton button {
-    background: #252540 !important;
-    border: 1px solid #353558 !important;
-    color: #E8EAF0 !important;
-    border-radius: 6px !important;
+    background: #2D0055 !important;
+    border: 1px solid #3D0070 !important;
+    color: #E8E0F0 !important;
+    border-radius: 8px !important;
     text-align: left !important;
-    padding: 10px 14px !important;
+    padding: 12px 14px !important;
     font-size: 13px !important;
-    margin-bottom: 6px !important;
-    transition: border-color 0.2s !important;
+    margin-bottom: 8px !important;
+    transition: all 0.2s !important;
+    line-height: 1.5 !important;
 }
 
 [data-testid="stSidebar"] .stButton button:hover {
-    border-color: #E8380D !important;
-    background: #2D2D50 !important;
+    border-color: #A100FF !important;
+    background: #3D0070 !important;
 }
 
-/* ── HERO HEADER ── */
+/* ── HERO ── */
 .hero {
-    background: #E8380D;
-    border-radius: 0px;
-    padding: 28px 36px;
+    background: linear-gradient(135deg, #1A0033 0%, #4B0099 100%);
+    border-radius: 12px;
+    padding: 36px 40px;
     margin-bottom: 28px;
     color: white;
-    border-bottom: 4px solid #C42D09;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 200px;
+    height: 200px;
+    background: rgba(161, 0, 255, 0.15);
+    border-radius: 50%;
 }
 
 .hero-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 700;
-    margin: 0 0 6px 0;
+    margin: 0 0 8px 0;
     letter-spacing: -0.5px;
     line-height: 1.2;
 }
 
 .hero-sub {
     font-size: 14px;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255,255,255,0.7);
     margin: 0;
     font-weight: 300;
-    letter-spacing: 0.2px;
+    max-width: 600px;
+    line-height: 1.6;
 }
 
-.hero-tag {
-    display: inline-block;
-    background: rgba(0,0,0,0.2);
+.hero-pills {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.hero-pill {
+    background: rgba(161, 0, 255, 0.3);
+    border: 1px solid rgba(161, 0, 255, 0.5);
     color: rgba(255,255,255,0.9);
-    font-size: 10px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 2px;
-    margin-bottom: 12px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-}
-
-/* ── SECTION CARDS ── */
-.section-card {
-    background: white;
-    border-radius: 4px;
-    padding: 24px 28px;
-    margin-bottom: 16px;
-    border-left: 4px solid #E8380D;
-    border-top: 1px solid #E8EBF0;
-    border-right: 1px solid #E8EBF0;
-    border-bottom: 1px solid #E8EBF0;
-}
-
-.section-number {
-    font-size: 10px;
-    font-weight: 700;
-    color: #E8380D;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-
-.section-heading {
-    font-family: 'Playfair Display', serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: #1A1A2E;
-    margin-bottom: 16px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 20px;
 }
 
 /* ── USER MESSAGE ── */
 .user-msg {
-    background: #1A1A2E;
-    color: #F0F0F8;
-    border-radius: 4px;
+    background: #1A0033;
+    color: #F0E8FF;
+    border-radius: 10px;
     padding: 16px 20px;
     margin-bottom: 24px;
     font-size: 15px;
-    font-style: italic;
-    border-left: 4px solid #E8380D;
+    border-left: 3px solid #A100FF;
 }
 
 .user-msg-label {
     font-size: 10px;
     font-weight: 700;
-    color: #E8380D;
+    color: #A100FF;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     margin-bottom: 6px;
-    font-style: normal;
 }
 
-/* ── ACCENTURE PURPLE CTA ── */
-.accenture-note {
-    background: #F5F0FF;
-    border-left: 3px solid #A100FF;
-    padding: 10px 16px;
-    border-radius: 0 4px 4px 0;
-    font-size: 13px;
-    color: #3D0080;
-    margin-top: 20px;
+/* ── PLAN OUTPUT ── */
+.plan-wrap {
+    background: white;
+    border-radius: 12px;
+    padding: 28px 32px;
+    border: 1px solid #EDE8F5;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(161,0,255,0.05);
 }
 
-/* ── DATA TABLES ── */
+/* ── TABLES ── */
 table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
-    font-family: 'Inter', sans-serif;
 }
 
 th {
-    background: #1A1A2E;
-    color: #F0F0F8;
+    background: #1A0033;
+    color: white;
     font-weight: 600;
     padding: 10px 14px;
     text-align: left;
     font-size: 11px;
     letter-spacing: 0.5px;
-    text-transform: uppercase;
 }
 
 td {
     padding: 10px 14px;
-    border-bottom: 1px solid #F0F0EC;
+    border-bottom: 1px solid #F0ECF8;
     color: #2D2D2D;
 }
 
 tr:nth-child(even) td {
-    background: #FAFAF8;
+    background: #FAF8FF;
 }
 
 tr:last-child td {
     border-bottom: none;
 }
 
-/* ── POSITIVE/NEGATIVE NUMBERS ── */
-.num-positive { color: #00875A; font-weight: 600; }
-.num-negative { color: #D32F2F; font-weight: 600; }
+/* ── SECTION HEADINGS inside plan ── */
+h2 {
+    color: #4B0099;
+    font-size: 16px;
+    font-weight: 700;
+    border-bottom: 2px solid #A100FF;
+    padding-bottom: 8px;
+    margin-top: 28px;
+    margin-bottom: 16px;
+}
+
+h3 {
+    color: #1A0033;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 20px;
+}
+
+/* ── BOTTOM NOTE ── */
+.bottom-note {
+    background: #F5F0FF;
+    border-left: 3px solid #A100FF;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: #4B0099;
+    margin-top: 20px;
+    line-height: 1.6;
+}
+
+/* ── DIVIDER ── */
+.purple-divider {
+    border: none;
+    border-top: 1px solid #EDE8F5;
+    margin: 24px 0;
+}
 
 /* ── FOOTER ── */
 .footer {
     text-align: center;
     color: #9CA3AF;
     font-size: 11px;
-    padding: 24px;
+    padding: 20px;
     margin-top: 8px;
-    border-top: 1px solid #E8EBF0;
     letter-spacing: 0.3px;
 }
 
-/* ── DIVIDER ── */
-.et-divider {
-    border: none;
-    border-top: 2px solid #E8380D;
-    margin: 8px 0 24px 0;
-    opacity: 0.3;
-}
-
-/* Status box */
+/* Status */
 [data-testid="stStatusWidget"] {
-    background: #1A1A2E !important;
-    border: 1px solid #E8380D !important;
-    color: white !important;
+    border-color: #A100FF !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -259,16 +264,14 @@ tr:last-child td {
 # ── SIDEBAR ────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style='padding: 16px 0 24px 0;'>
-        <div style='font-size:11px; font-weight:700;
-                    letter-spacing:1.5px; color:#E8380D;
-                    text-transform:uppercase;
-                    margin-bottom:8px;'>
+    <div style='padding:16px 0 24px 0;'>
+        <div style='font-size:18px; font-weight:700;
+                    color:#A100FF; margin-bottom:4px;'>
             Promotion Planner
         </div>
-        <div style='font-size:13px; color:#9CA3C8;
+        <div style='font-size:12px; color:#9080B0;
                     line-height:1.5;'>
-            AI-powered retail promotion decisions 
+            AI-powered retail promotion decisions
             backed by live catalog data.
         </div>
     </div>
@@ -276,7 +279,7 @@ with st.sidebar:
 
     st.markdown("""
     <div style='font-size:10px; font-weight:700;
-                color:#E8380D; letter-spacing:1.5px;
+                color:#A100FF; letter-spacing:1.5px;
                 text-transform:uppercase;
                 margin-bottom:10px;'>
         Try an example
@@ -292,29 +295,29 @@ with st.sidebar:
             st.session_state["prefill"] = ex["prompt"]
             st.rerun()
 
-    st.markdown("<div style='margin:20px 0; border-top:1px solid #2D2D50;'></div>",
+    st.markdown("<div style='margin:20px 0; border-top:1px solid #2D0055;'></div>",
                 unsafe_allow_html=True)
 
     st.markdown("""
     <div style='font-size:10px; font-weight:700;
-                color:#E8380D; letter-spacing:1.5px;
+                color:#A100FF; letter-spacing:1.5px;
                 text-transform:uppercase;
                 margin-bottom:12px;'>
         How it works
     </div>
-    <div style='font-size:12px; line-height:2; color:#9CA3C8;'>
-        <span style='color:#E8380D; font-weight:600;'>01</span>
+    <div style='font-size:12px; line-height:2.2; color:#9080B0;'>
+        <span style='color:#A100FF; font-weight:600;'>01</span>
         &nbsp; Describe your promotion<br>
-        <span style='color:#E8380D; font-weight:600;'>02</span>
+        <span style='color:#A100FF; font-weight:600;'>02</span>
         &nbsp; AI reads your catalog<br>
-        <span style='color:#E8380D; font-weight:600;'>03</span>
+        <span style='color:#A100FF; font-weight:600;'>03</span>
         &nbsp; Simulation runs P&amp;L<br>
-        <span style='color:#E8380D; font-weight:600;'>04</span>
+        <span style='color:#A100FF; font-weight:600;'>04</span>
         &nbsp; Full plan delivered
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div style='margin:20px 0; border-top:1px solid #2D2D50;'></div>",
+    st.markdown("<div style='margin:20px 0; border-top:1px solid #2D0055;'></div>",
                 unsafe_allow_html=True)
 
     if st.button("Clear conversation",
@@ -324,18 +327,12 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("""
-    <div style='font-size:11px; color:#4B5278;
-                margin-top:24px; line-height:1.8;'>
-        Powered by<br>
-        <span style='color:#6B7A9A; font-weight:500;'>
-            Databricks Delta Lake
-        </span><br>
-        <span style='color:#6B7A9A; font-weight:500;'>
-            Groq AI
-        </span><br>
-        <span style='color:#A100FF; font-weight:500;'>
-            Accenture &amp; ET Hackathon 2026
-        </span>
+    <div style='font-size:11px; color:#4B3570;
+                margin-top:24px; line-height:2;'>
+        <span style='color:#7040A0;'>Powered by</span><br>
+        Databricks Delta Lake<br>
+        Groq AI<br>
+        PySpark Simulation
     </div>
     """, unsafe_allow_html=True)
 
@@ -347,18 +344,24 @@ if "messages" not in st.session_state:
 # Hero
 st.markdown("""
 <div class='hero'>
-    <div class='hero-tag'>Accenture &amp; ET Hackathon 2026</div>
     <div class='hero-title'>AI Retail Promotion Planner</div>
     <div class='hero-sub'>
-        Describe any promotion in plain English — 
-        get a complete data-driven plan in seconds. 
-        P&amp;L simulation · Segment playbook · 
-        Competitor context · Execution checklist.
+        Describe any promotion in plain English.
+        Get a complete data-driven plan in seconds —
+        with P&amp;L simulation, segment playbook,
+        competitor context and execution checklist.
+    </div>
+    <div class='hero-pills'>
+        <span class='hero-pill'>P&amp;L Simulation</span>
+        <span class='hero-pill'>Segment Playbook</span>
+        <span class='hero-pill'>Competitor Context</span>
+        <span class='hero-pill'>Execution Checklist</span>
+        <span class='hero-pill'>Cannibalization Risk</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Conversation history
+# History
 for msg in st.session_state["messages"]:
     if msg["role"] == "user":
         st.markdown(f"""
@@ -368,9 +371,16 @@ for msg in st.session_state["messages"]:
         </div>
         """, unsafe_allow_html=True)
     else:
+        st.markdown(
+            "<div class='plan-wrap'>",
+            unsafe_allow_html=True
+        )
         st.markdown(msg["content"])
-        st.markdown("<hr class='et-divider'>",
-                    unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<hr class='purple-divider'>",
+            unsafe_allow_html=True
+        )
 
 
 # ── JOB RUNNER ─────────────────────────────────────────────────
@@ -388,9 +398,9 @@ def run_job(prompt: str) -> str:
         return f"❌ Could not start job: {run_resp.text}"
 
     run_id = run_resp.json()["run_id"]
-
     max_wait = 360
     elapsed  = 0
+
     while elapsed < max_wait:
         time.sleep(10)
         elapsed += 10
@@ -462,16 +472,20 @@ if prompt:
             label="Plan ready", state="complete"
         )
 
+    st.markdown(
+        "<div class='plan-wrap'>",
+        unsafe_allow_html=True
+    )
     st.markdown(plan)
-    st.markdown("<hr class='et-divider'>",
-                unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("""
-    <div class='accenture-note'>
-        This plan was generated using live Delta Lake 
-        catalog data, PySpark financial simulation, 
-        and Groq AI decision-making — 
-        no hardcoded rules or templates.
+    <div class='bottom-note'>
+        This plan was generated using live Databricks 
+        Delta Lake catalog data, PySpark financial 
+        simulation, and Groq AI decision-making. 
+        Every number is calculated — no templates, 
+        no hardcoded rules.
     </div>
     """, unsafe_allow_html=True)
 
@@ -481,7 +495,7 @@ if prompt:
 
     st.markdown("""
     <div class='footer'>
-        Databricks Delta Lake · Groq AI · PySpark Simulation · 
-        Accenture &amp; ET Hackathon 2026
+        Databricks Delta Lake · Groq AI · 
+        PySpark Simulation
     </div>
     """, unsafe_allow_html=True)
