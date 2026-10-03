@@ -1295,16 +1295,7 @@ def parse_scope(user_request: str) -> dict:
     print("Parsing scope from request...")
 
     prompt = f"""
-    You are reading a conversation between a retail
-    manager and an AI promotion planner.
-
-    Extract these 6 fields for the CURRENT REQUEST only.
-    Use conversation history to resolve missing context.
-    If current request is a follow-up to a system question
-    use previous messages to fill in missing fields.
-    If current request is a new independent promotion
-    extract only from that new request.
-
+    Extract these 6 fields from the request.
     Return ONLY valid JSON. No explanation. No markdown.
 
     {{
@@ -1323,7 +1314,7 @@ def parse_scope(user_request: str) -> dict:
     "marketing_budget": "number if explicitly stated or null"
     }}
 
-    {user_request}
+    Request: {user_request}
     """
 
     response = completion(
