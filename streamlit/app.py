@@ -16,301 +16,241 @@ EXAMPLE_PROMPTS = [
     {
         "label": "🥤 Diwali Beverages",
         "prompt": "Build a promotion for beverages in India for Diwali. My marketing budget is 10000 INR.",
-        "desc":   "Seasonal promotion across India"
+        "desc":   "Seasonal promotion · India"
     },
     {
-        "label": "🧴 FMCG Clearance",
+        "label": "🧴 FMCG Stock Clearance",
         "prompt": "I need to clear my FMCG stock in India before year end.",
-        "desc":   "Inventory clearance drive"
+        "desc":   "Inventory clearance · India"
     },
     {
         "label": "🖥️ Black Friday Electronics",
         "prompt": "Build a promotion for electronics in USA for Black Friday.",
-        "desc":   "High-demand seasonal event"
+        "desc":   "Peak event · USA"
     },
     {
-        "label": "🧼 Ariel Diwali",
+        "label": "🧼 Single Brand Diwali",
         "prompt": "Build a promotion for Ariel in India for Diwali.",
-        "desc":   "Single brand promotion"
+        "desc":   "Brand promotion · India"
     }
-]
-
-STEPS = [
-    "Parsing your request...",
-    "Fetching catalog and market data...",
-    "Running financial simulation...",
-    "Getting AI decisions...",
-    "Assembling your plan..."
 ]
 
 # ── PAGE SETUP ─────────────────────────────────────────────────
 st.set_page_config(
-    page_title = "Promotion Planner",
-    page_icon  = "🛒",
-    layout     = "wide",
-    initial_sidebar_state = "expanded"
+    page_title="Promotion Planner",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # ── STYLES ─────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;500;600&display=swap');
 
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
+    background: #FAFAF8;
 }
 
-/* Hide default streamlit chrome */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
 
-/* Main background */
 .stApp {
-    background: #F7F8FA;
+    background: #FAFAF8;
 }
 
-/* Sidebar */
+/* ── SIDEBAR ── */
 [data-testid="stSidebar"] {
-    background: #1A1D2E;
-    border-right: 1px solid #2D3148;
+    background: #1A1A2E;
+    border-right: 2px solid #E8380D;
 }
 
 [data-testid="stSidebar"] * {
     color: #E8EAF0 !important;
 }
 
-/* Hero header */
-.hero {
-    background: linear-gradient(135deg, #1A1D2E 0%, #2D3561 100%);
-    border-radius: 16px;
-    padding: 32px 36px;
-    margin-bottom: 24px;
-    color: white;
+[data-testid="stSidebar"] .stButton button {
+    background: #252540 !important;
+    border: 1px solid #353558 !important;
+    color: #E8EAF0 !important;
+    border-radius: 6px !important;
+    text-align: left !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    margin-bottom: 6px !important;
+    transition: border-color 0.2s !important;
 }
 
-.hero h1 {
-    font-size: 28px;
+[data-testid="stSidebar"] .stButton button:hover {
+    border-color: #E8380D !important;
+    background: #2D2D50 !important;
+}
+
+/* ── HERO HEADER ── */
+.hero {
+    background: #E8380D;
+    border-radius: 0px;
+    padding: 28px 36px;
+    margin-bottom: 28px;
+    color: white;
+    border-bottom: 4px solid #C42D09;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
     font-weight: 700;
     margin: 0 0 6px 0;
     letter-spacing: -0.5px;
+    line-height: 1.2;
 }
 
-.hero p {
-    font-size: 15px;
-    color: #9CA3C8;
+.hero-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
     margin: 0;
+    font-weight: 300;
+    letter-spacing: 0.2px;
 }
 
-.hero-badge {
+.hero-tag {
     display: inline-block;
-    background: rgba(99, 120, 255, 0.2);
-    border: 1px solid rgba(99, 120, 255, 0.4);
-    color: #8B9FFF;
-    font-size: 11px;
+    background: rgba(0,0,0,0.2);
+    color: rgba(255,255,255,0.9);
+    font-size: 10px;
     font-weight: 600;
     padding: 3px 10px;
-    border-radius: 20px;
-    margin-bottom: 14px;
-    letter-spacing: 0.5px;
-}
-
-/* Section cards */
-.section-card {
-    background: white;
-    border-radius: 12px;
-    padding: 24px 28px;
-    margin-bottom: 16px;
-    border: 1px solid #E8EBF0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-
-.section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #6378FF;
-    letter-spacing: 0.8px;
-    margin-bottom: 8px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
 }
 
-.section-title {
-    font-size: 17px;
-    font-weight: 600;
-    color: #1A1D2E;
+/* ── SECTION CARDS ── */
+.section-card {
+    background: white;
+    border-radius: 4px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+    border-left: 4px solid #E8380D;
+    border-top: 1px solid #E8EBF0;
+    border-right: 1px solid #E8EBF0;
+    border-bottom: 1px solid #E8EBF0;
+}
+
+.section-number {
+    font-size: 10px;
+    font-weight: 700;
+    color: #E8380D;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.section-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1A1A2E;
     margin-bottom: 16px;
 }
 
-/* Metric row */
-.metric-row {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.metric-box {
-    background: #F0F3FF;
-    border-radius: 10px;
-    padding: 14px 20px;
-    min-width: 140px;
-    flex: 1;
-}
-
-.metric-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1A1D2E;
-}
-
-.metric-label {
-    font-size: 12px;
-    color: #6B7280;
-    margin-top: 2px;
-}
-
-/* Risk indicator */
-.risk-low {
-    background: #ECFDF5;
-    border: 1px solid #A7F3D0;
-    color: #065F46;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    display: inline-block;
-}
-
-.risk-medium {
-    background: #FFFBEB;
-    border: 1px solid #FDE68A;
-    color: #92400E;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    display: inline-block;
-}
-
-.risk-high {
-    background: #FEF2F2;
-    border: 1px solid #FECACA;
-    color: #991B1B;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    display: inline-block;
-}
-
-/* Pass/fail badges */
-.badge-pass {
-    background: #ECFDF5;
-    color: #065F46;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.badge-fail {
-    background: #FEF2F2;
-    color: #991B1B;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-/* Example prompt buttons */
-.example-btn {
-    background: #2D3148;
-    border: 1px solid #3D4268;
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: background 0.2s;
-    width: 100%;
-    text-align: left;
-}
-
-.example-btn:hover {
-    background: #363B5E;
-}
-
-/* Progress steps */
-.step-active {
-    color: #6378FF;
-    font-weight: 500;
-}
-
-.step-done {
-    color: #10B981;
-}
-
-.step-pending {
-    color: #9CA3AF;
-}
-
-/* Chat input area */
-[data-testid="stChatInput"] {
-    border-top: 1px solid #E8EBF0;
-    padding-top: 16px;
-}
-
-/* User message */
+/* ── USER MESSAGE ── */
 .user-msg {
-    background: #1A1D2E;
-    color: white;
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 20px;
+    background: #1A1A2E;
+    color: #F0F0F8;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
     font-size: 15px;
-    max-width: 80%;
-    margin-left: auto;
+    font-style: italic;
+    border-left: 4px solid #E8380D;
 }
 
-/* Tables */
+.user-msg-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #E8380D;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-style: normal;
+}
+
+/* ── ACCENTURE PURPLE CTA ── */
+.accenture-note {
+    background: #F5F0FF;
+    border-left: 3px solid #A100FF;
+    padding: 10px 16px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+    color: #3D0080;
+    margin-top: 20px;
+}
+
+/* ── DATA TABLES ── */
 table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
+    font-family: 'Inter', sans-serif;
 }
 
 th {
-    background: #F0F3FF;
-    color: #1A1D2E;
+    background: #1A1A2E;
+    color: #F0F0F8;
     font-weight: 600;
     padding: 10px 14px;
     text-align: left;
-    border-bottom: 2px solid #E8EBF0;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 td {
     padding: 10px 14px;
-    border-bottom: 1px solid #F3F4F6;
-    color: #374151;
+    border-bottom: 1px solid #F0F0EC;
+    color: #2D2D2D;
+}
+
+tr:nth-child(even) td {
+    background: #FAFAF8;
 }
 
 tr:last-child td {
     border-bottom: none;
 }
 
-/* Divider */
-.plan-divider {
-    border: none;
-    border-top: 1px solid #E8EBF0;
-    margin: 8px 0 20px 0;
-}
+/* ── POSITIVE/NEGATIVE NUMBERS ── */
+.num-positive { color: #00875A; font-weight: 600; }
+.num-negative { color: #D32F2F; font-weight: 600; }
 
-/* Footer */
+/* ── FOOTER ── */
 .footer {
     text-align: center;
     color: #9CA3AF;
-    font-size: 12px;
-    padding: 20px;
-    margin-top: 20px;
+    font-size: 11px;
+    padding: 24px;
+    margin-top: 8px;
+    border-top: 1px solid #E8EBF0;
+    letter-spacing: 0.3px;
+}
+
+/* ── DIVIDER ── */
+.et-divider {
+    border: none;
+    border-top: 2px solid #E8380D;
+    margin: 8px 0 24px 0;
+    opacity: 0.3;
+}
+
+/* Status box */
+[data-testid="stStatusWidget"] {
+    background: #1A1A2E !important;
+    border: 1px solid #E8380D !important;
+    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -319,24 +259,27 @@ tr:last-child td {
 # ── SIDEBAR ────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style='padding: 8px 0 20px 0;'>
-        <div style='font-size:22px; font-weight:700; 
-                    letter-spacing:-0.5px;'>
-            🛒 Promotion Planner
+    <div style='padding: 16px 0 24px 0;'>
+        <div style='font-size:11px; font-weight:700;
+                    letter-spacing:1.5px; color:#E8380D;
+                    text-transform:uppercase;
+                    margin-bottom:8px;'>
+            Promotion Planner
         </div>
-        <div style='font-size:12px; color:#6B7A9A; 
-                    margin-top:4px;'>
-            AI-powered retail decisions
+        <div style='font-size:13px; color:#9CA3C8;
+                    line-height:1.5;'>
+            AI-powered retail promotion decisions 
+            backed by live catalog data.
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
     st.markdown("""
-    <div style='font-size:11px; font-weight:600; 
-                color:#6B7A9A; letter-spacing:0.8px;
-                margin-bottom:12px;'>
-        TRY THESE EXAMPLES
+    <div style='font-size:10px; font-weight:700;
+                color:#E8380D; letter-spacing:1.5px;
+                text-transform:uppercase;
+                margin-bottom:10px;'>
+        Try an example
     </div>
     """, unsafe_allow_html=True)
 
@@ -349,87 +292,89 @@ with st.sidebar:
             st.session_state["prefill"] = ex["prompt"]
             st.rerun()
 
-    st.markdown("---")
+    st.markdown("<div style='margin:20px 0; border-top:1px solid #2D2D50;'></div>",
+                unsafe_allow_html=True)
+
     st.markdown("""
-    <div style='font-size:11px; font-weight:600; 
-                color:#6B7A9A; letter-spacing:0.8px;
+    <div style='font-size:10px; font-weight:700;
+                color:#E8380D; letter-spacing:1.5px;
+                text-transform:uppercase;
                 margin-bottom:12px;'>
-        HOW IT WORKS
+        How it works
     </div>
-    <div style='font-size:13px; line-height:1.8;'>
-        <div style='margin-bottom:8px;'>
-            <span style='color:#6378FF;'>①</span> 
-            Describe your promotion goal
-        </div>
-        <div style='margin-bottom:8px;'>
-            <span style='color:#6378FF;'>②</span> 
-            AI analyses your catalog
-        </div>
-        <div style='margin-bottom:8px;'>
-            <span style='color:#6378FF;'>③</span> 
-            Simulation runs across scenarios
-        </div>
-        <div style='margin-bottom:8px;'>
-            <span style='color:#6378FF;'>④</span> 
-            Full plan delivered instantly
-        </div>
+    <div style='font-size:12px; line-height:2; color:#9CA3C8;'>
+        <span style='color:#E8380D; font-weight:600;'>01</span>
+        &nbsp; Describe your promotion<br>
+        <span style='color:#E8380D; font-weight:600;'>02</span>
+        &nbsp; AI reads your catalog<br>
+        <span style='color:#E8380D; font-weight:600;'>03</span>
+        &nbsp; Simulation runs P&amp;L<br>
+        <span style='color:#E8380D; font-weight:600;'>04</span>
+        &nbsp; Full plan delivered
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("<div style='margin:20px 0; border-top:1px solid #2D2D50;'></div>",
+                unsafe_allow_html=True)
 
-    if st.button("🗑️ Clear conversation",
+    if st.button("Clear conversation",
                  use_container_width=True):
         st.session_state["messages"] = []
         st.session_state.pop("prefill", None)
         st.rerun()
 
     st.markdown("""
-    <div style='font-size:11px; color:#4B5278; 
-                margin-top:20px; line-height:1.6;'>
+    <div style='font-size:11px; color:#4B5278;
+                margin-top:24px; line-height:1.8;'>
         Powered by<br>
-        <strong style='color:#6B7A9A;'>
+        <span style='color:#6B7A9A; font-weight:500;'>
             Databricks Delta Lake
-        </strong><br>
-        <strong style='color:#6B7A9A;'>
-            Groq AI (LLM)
-        </strong>
+        </span><br>
+        <span style='color:#6B7A9A; font-weight:500;'>
+            Groq AI
+        </span><br>
+        <span style='color:#A100FF; font-weight:500;'>
+            Accenture &amp; ET Hackathon 2026
+        </span>
     </div>
     """, unsafe_allow_html=True)
 
 
-# ── MAIN AREA ──────────────────────────────────────────────────
+# ── MAIN ───────────────────────────────────────────────────────
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-# Hero header
+# Hero
 st.markdown("""
 <div class='hero'>
-    <div class='hero-badge'>AI-POWERED</div>
-    <h1>Retail Promotion Planner</h1>
-    <p>Describe any promotion in plain English. 
-       Get a complete data-driven plan in seconds — 
-       P&amp;L simulation, segment playbook, 
-       competitor context and execution checklist.</p>
+    <div class='hero-tag'>Accenture &amp; ET Hackathon 2026</div>
+    <div class='hero-title'>AI Retail Promotion Planner</div>
+    <div class='hero-sub'>
+        Describe any promotion in plain English — 
+        get a complete data-driven plan in seconds. 
+        P&amp;L simulation · Segment playbook · 
+        Competitor context · Execution checklist.
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Show conversation history
+# Conversation history
 for msg in st.session_state["messages"]:
     if msg["role"] == "user":
-        st.markdown(
-            f"<div class='user-msg'>{msg['content']}</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""
+        <div class='user-msg'>
+            <div class='user-msg-label'>Your request</div>
+            {msg['content']}
+        </div>
+        """, unsafe_allow_html=True)
     else:
-        st.markdown(msg["content"], unsafe_allow_html=True)
+        st.markdown(msg["content"])
+        st.markdown("<hr class='et-divider'>",
+                    unsafe_allow_html=True)
 
 
-# ── HELPERS ────────────────────────────────────────────────────
+# ── JOB RUNNER ─────────────────────────────────────────────────
 def run_job(prompt: str) -> str:
-    """Submit Databricks job and poll for result."""
-
-    # Submit
     run_resp = requests.post(
         f"{DATABRICKS_URL}/api/2.1/jobs/run-now",
         headers=HEADERS,
@@ -444,7 +389,6 @@ def run_job(prompt: str) -> str:
 
     run_id = run_resp.json()["run_id"]
 
-    # Poll
     max_wait = 360
     elapsed  = 0
     while elapsed < max_wait:
@@ -462,8 +406,8 @@ def run_job(prompt: str) -> str:
         if state == "TERMINATED":
             if status["state"]["result_state"] == "SUCCESS":
                 tasks       = status.get("tasks", [])
-                task_run_id = tasks[0]["run_id"] if tasks else run_id
-
+                task_run_id = tasks[0]["run_id"] \
+                    if tasks else run_id
                 out_resp = requests.get(
                     f"{DATABRICKS_URL}/api/2.1/jobs/runs/get-output",
                     headers=HEADERS,
@@ -473,7 +417,7 @@ def run_job(prompt: str) -> str:
                     "notebook_output", {}
                 ).get("result", "No output returned.")
             else:
-                return "❌ Job did not complete successfully. Please try again."
+                return "❌ Job did not complete. Please try again."
 
         elif state in ["INTERNAL_ERROR", "SKIPPED"]:
             return "❌ An error occurred. Please try again."
@@ -481,48 +425,31 @@ def run_job(prompt: str) -> str:
     return "⏱️ Request timed out. Please try again."
 
 
-def show_progress():
-    """Show animated progress steps."""
-    placeholder = st.empty()
-    for i, step in enumerate(STEPS):
-        lines = []
-        for j, s in enumerate(STEPS):
-            if j < i:
-                lines.append(f"✅ {s}")
-            elif j == i:
-                lines.append(f"⏳ **{s}**")
-            else:
-                lines.append(f"○ {s}")
-        placeholder.markdown("\n\n".join(lines))
-        time.sleep(2)
-    placeholder.empty()
-    return placeholder
-
-
 # ── CHAT INPUT ─────────────────────────────────────────────────
-prefill  = st.session_state.pop("prefill", "")
-prompt   = st.chat_input(
+prefill = st.session_state.pop("prefill", "")
+prompt  = st.chat_input(
     "Describe your promotion — product, region, event, budget..."
 ) or prefill
 
 if prompt:
-    # Show user message
-    st.markdown(
-        f"<div class='user-msg'>{prompt}</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown(f"""
+    <div class='user-msg'>
+        <div class='user-msg-label'>Your request</div>
+        {prompt}
+    </div>
+    """, unsafe_allow_html=True)
+
     st.session_state["messages"].append({
         "role": "user", "content": prompt
     })
 
-    # Progress + job
     with st.status(
         "Building your promotion plan...",
         expanded=True
     ) as status_box:
         st.write("📡 Connecting to Databricks...")
         time.sleep(1)
-        st.write("📦 Loading your product catalog...")
+        st.write("📦 Fetching your product catalog...")
         time.sleep(1)
         st.write("🧮 Running financial simulation...")
         time.sleep(1)
@@ -532,20 +459,29 @@ if prompt:
 
         st.write("✅ Plan ready.")
         status_box.update(
-            label="Plan complete", state="complete"
+            label="Plan ready", state="complete"
         )
 
-    # Display plan
-    st.markdown(plan, unsafe_allow_html=False)
+    st.markdown(plan)
+    st.markdown("<hr class='et-divider'>",
+                unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class='accenture-note'>
+        This plan was generated using live Delta Lake 
+        catalog data, PySpark financial simulation, 
+        and Groq AI decision-making — 
+        no hardcoded rules or templates.
+    </div>
+    """, unsafe_allow_html=True)
+
     st.session_state["messages"].append({
         "role": "assistant", "content": plan
     })
 
-    # Footer note
     st.markdown("""
     <div class='footer'>
-        Plan generated using Delta Lake catalog data · 
-        Groq AI decisions · 
-        PySpark financial simulation
+        Databricks Delta Lake · Groq AI · PySpark Simulation · 
+        Accenture &amp; ET Hackathon 2026
     </div>
     """, unsafe_allow_html=True)
