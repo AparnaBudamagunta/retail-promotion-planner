@@ -434,6 +434,38 @@ for msg in st.session_state["messages"]:
 
 #     return "⏱️ Request timed out. Please try again."
 
+# ── CONTEXT BUILDER ───────────────────────────────────────────
+def build_conversation_context(
+        messages: list,
+        current_prompt: str) -> str:
+    """
+    Sends full conversation history to Databricks.
+    User messages sent in full.
+    System responses summarised to save tokens.
+    LLM reasons about context naturally.
+    """
+    if not messages:
+        return current_prompt
+
+    context_lines = ["CONVERSATION HISTORY:"]
+    for msg in messages:
+        if msg["role"] == "user":
+            context_lines.append(
+                f"Manager: {msg['content']}"
+            )
+        else:
+            summary = msg.get(
+                "summary",
+                msg["content"][:150] + "..."
+            )
+            context_lines.append(
+                f"System: {summary}"
+            )
+
+    context_lines.append(
+        f"\nCURRENT REQUEST: {current_prompt}"
+    )
+    return "\n".join(context_lines)
 
 # ── CHAT INPUT ─────────────────────────────────────────────────
 prefill = st.session_state.pop("prefill", "")
@@ -466,7 +498,12 @@ if prompt:
             headers=HEADERS,
             json={
                 "job_id": JOB_ID,
-                "notebook_params": {"user_request": prompt}
+                "notebook_params": {
+                    "user_request": build_conversation_context(
+                        st.session_state["messages"],
+                        prompt
+                    )
+                }
             }
         )
 
@@ -551,8 +588,11 @@ if prompt:
     </div>
     """, unsafe_allow_html=True)
 
+    first_line = plan.split('\n')[0][:150]
     st.session_state["messages"].append({
-        "role": "assistant", "content": plan
+        "role":    "assistant",
+        "content": plan,
+        "summary": first_line
     })
 
     st.markdown("""

@@ -1295,29 +1295,36 @@ def parse_scope(user_request: str) -> dict:
     print("Parsing scope from request...")
 
     prompt = f"""
-Extract these 6 fields from the request.
-Return ONLY valid JSON. No explanation. No markdown.
+    You are reading a conversation between a retail
+    manager and an AI promotion planner.
 
-{{
-  "category": "product category mentioned or all",
-  "geography": "country or region mentioned or all",
-  "event": "event or festival mentioned or null",
-  "currency": "appropriate currency for the geography",
-  "goal": "what the manager wants to achieve.
-           Read their exact words and summarise.
-           Examples:
-             seasonal_capitalisation — festival or season mentioned
-             inventory_clearance — clearing stock mentioned
-             brand_promotion — brand partner mentioned
-             competitive_response — competitor mentioned
-             traffic_driver — footfall mentioned
-             revenue_growth — grow sales mentioned
-             unknown — genuinely unclear",
-  "marketing_budget": "number if explicitly stated or null if not mentioned"
-}}
+    Extract these 6 fields for the CURRENT REQUEST only.
+    Use conversation history to resolve missing context.
+    If current request is a follow-up to a system question
+    use previous messages to fill in missing fields.
+    If current request is a new independent promotion
+    extract only from that new request.
 
-Request: {user_request}
-"""
+    Return ONLY valid JSON. No explanation. No markdown.
+
+    {{
+    "category": "product category or all",
+    "geography": "country or region or all",
+    "event": "event or festival or null",
+    "currency": "appropriate currency for geography",
+    "goal": "what manager wants to achieve.
+            seasonal_capitalisation — festival mentioned
+            inventory_clearance — clearing stock mentioned
+            brand_promotion — brand partner mentioned
+            competitive_response — competitor mentioned
+            traffic_driver — footfall mentioned
+            revenue_growth — grow sales mentioned
+            unknown — genuinely unclear",
+    "marketing_budget": "number if explicitly stated or null"
+    }}
+
+    {user_request}
+    """
 
     response = completion(
         model="groq/qwen/qwen3.8-27b",
