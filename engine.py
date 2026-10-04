@@ -88,13 +88,16 @@ def calculate_promotions_simulation(
         competitor_prices: list,
         benchmarks: list,
         event_details: dict,
+        currency: str,        
         marketing_budget: float,
-        currency: str,
         min_margin_pct: float = 20.0) -> dict:
     """
     Calculates P&L simulation for every product.
     Returns full simulation + LLM summary + sections.
     """
+
+    # effective_budget = marketing_budget if marketing_budget is not None else 0.0
+
 
     # Duration and multiplier from event data
     if event_details:
@@ -317,6 +320,13 @@ def calculate_promotions_simulation(
                     best_discount  = s["discount_pct"]
                     best_scenario  = s
 
+        winning_source = best_scenario.get("discount_source")  
+        winning_scenarios = [
+            s for s in scenarios_all
+            if s["discount_source"] == winning_source
+            and s["discount_pct"] == best_discount
+        ]            
+
         simulations.append({
             "sku_id":              sku_id,
             "product_name":        product_name,
@@ -344,7 +354,7 @@ def calculate_promotions_simulation(
             "recommended_discount_pct": best_discount,
             "recommended_net_gain":     best_net_gain,
             "recommended_scenario":     best_scenario,
-            "scenarios":                scenarios_all
+            "scenarios":                winning_scenarios
         })
 
     # Identify promoted products
@@ -444,7 +454,7 @@ def build_llm_summary(
     lines.append("")
 
     lines.append(
-        f"BUDGET: {simulation['marketing_budget']} {currency}"
+        f"BUDGET: {'not specified' if not simulation['marketing_budget'] else str(simulation['marketing_budget']) + ' ' + currency}"
     )
     lines.append(
         f"CONSTRAINTS: min_margin={simulation['min_margin_pct']}%"
@@ -1183,6 +1193,25 @@ def assemble_plan(
     simulation["cannibalization_summary"] = \
         cannibal_data["cannibalization_summary"]
 
+    # Build inference note if goal was inferred
+    goal = context.get("goal", "")
+    if str(context.get("goal_inferred", "false")).lower() == "true":
+        reason = context.get(
+            "inference_reason",
+            "inferred from request context"
+        )
+        inference_note = (
+            f"> ～ **Assumed goal:** {goal}  \n"
+            f"> {reason}  \n"
+            f"> *Restate your request if this is wrong.*\n\n"
+            f"---\n\n"
+        )
+    else:
+        inference_note = (
+            f"> ✓ **Building plan for:** {goal}\n\n"
+            f"---\n\n"
+        )
+
     sections = [
         build_section_1(decisions, simulation, context),
         build_section_2(decisions, simulation),
@@ -1198,16 +1227,7 @@ def assemble_plan(
 
     plan = "\n\n---\n\n".join(sections)
 
-    # Fix line breaks for Streamlit rendering
-    # Bold fields on same line get separated
-    # import re
-    # plan = re.sub(
-    #     r'(\*\*[^*]+:\*\*[^\n]+)\n(\*\*)',
-    #     r'\1  \n\2',
-    #     plan
-    # )
-
-    return plan
+    return inference_note + plan
 
 
 def recalculate_cannibalization(
@@ -1299,18 +1319,25 @@ def parse_scope(user_request: str) -> dict:
     Return ONLY valid JSON. No explanation. No markdown.
 
     {{
-    "category": "product category or all",
+    "category": ["the type or class of products.
+               Never put a brand or product name here.
+               If manager names a specific product
+               infer its category instead."],
     "geography": "country or region or all",
     "event": "event or festival or null",
     "currency": "appropriate currency for geography",
-    "goal": "what manager wants to achieve.
-            seasonal_capitalisation — festival mentioned
-            inventory_clearance — clearing stock mentioned
-            brand_promotion — brand partner mentioned
-            competitive_response — competitor mentioned
-            traffic_driver — footfall mentioned
-            revenue_growth — grow sales mentioned
-            unknown — genuinely unclear",
+    "goal": "the business outcome the manager wants to achieve.
+           Not the action (build, promote, launch or etc).
+           The underlying business reason.
+           Infer from context if not explicitly stated.
+           Always return a value — never leave empty.",
+    "goal_inferred": "true if the business outcome
+                    had to be inferred from context.
+                    false only if the manager explicitly
+                    described their business objective
+                    beyond just naming a product or action.",
+    "inference_reason": "one sentence explaining your inference.
+                        null if manager stated goal explicitly.",
     "marketing_budget": "number if explicitly stated or null"
     }}
 
@@ -1335,16 +1362,20 @@ def parse_scope(user_request: str) -> dict:
         print(f"     Event:     {scope.get('event')}")
         print(f"     Currency:  {scope.get('currency')}")
         print(f"     Goal:      {scope.get('goal')}")
+        print(f"     Inferred:  {scope.get('goal_inferred')}")
+        print(f"     Reason:    {scope.get('inference_reason')}")
         print(f"     Budget:    {scope.get('marketing_budget')}")
         return scope
     except json.JSONDecodeError:
         print("  ⚠️  Parse error — using safe defaults")
         return {
-            "category":         "all",
+            "category":         ["all"],
             "geography":        "all",
             "event":            None,
             "currency":         "INR",
-            "goal":             "unknown",
+            "goal":             "seasonal_capitalisation",
+            "goal_inferred":    "true",
+            "inference_reason": "default fallback",
             "marketing_budget": None
         }
 
@@ -1372,10 +1403,11 @@ def build_promotion_context(
     # ── 1. INVENTORY ──────────────────────────────
     print("  → Fetching inventory...")
     inv_query = """
-        SELECT
+        SELECT DISTINCT
             p.sku_id,
             p.product_name,
             p.category,
+            p.sub_category,
             p.geography,
             p.currency,
             p.base_price,
@@ -1393,10 +1425,25 @@ def build_promotion_context(
           ON p.sku_id = i.sku_id
         WHERE 1=1
     """
-    if category != "all":
-        inv_query += f" AND LOWER(p.category) = LOWER('{category}')"
+    if category != "all" and category != ["all"]:
+        if isinstance(category, list):
+            category_terms = category
+        else:
+            category_terms = [category]
+        category_conditions = " OR ".join([
+            f"""(
+                LOWER(p.category) LIKE '%{term.lower()}%'
+                OR LOWER(p.sub_category) LIKE '%{term.lower()}%'
+                OR '{term.lower()}' LIKE '%' || LOWER(p.sub_category) || '%'
+            )"""
+            for term in category_terms
+        ])
+        inv_query += f" AND ({category_conditions})"
+
     if geography != "all":
-        inv_query += f" AND p.geography = '{geography}'"
+        inv_query += f"""
+            AND LOWER(p.geography) LIKE '%{geography.lower()}%'
+        """
 
     if specific_product:
         inv_query += f"""
@@ -1406,6 +1453,7 @@ def build_promotion_context(
         """
 
     inv_query += " ORDER BY i.days_cover DESC"
+
     inv_df = spark.sql(inv_query)
     context["inventory"] = inv_df.toPandas().to_dict(
         orient="records"
@@ -1415,7 +1463,7 @@ def build_promotion_context(
     # ── 2. COMPETITOR PRICES ──────────────────────
     print("  → Fetching competitor prices...")
     comp_query = """
-        SELECT
+        SELECT DISTINCT
             cp.sku_id,
             p.product_name,
             p.base_price AS our_price,
@@ -1437,10 +1485,25 @@ def build_promotion_context(
           ON cp.sku_id = p.sku_id
         WHERE 1=1
     """
-    if category != "all":
-        comp_query += f" AND LOWER(p.category) = LOWER('{category}')"
+    if category != "all" and category != ["all"]:
+        if isinstance(category, list):
+            category_terms = category
+        else:
+            category_terms = [category]
+        category_conditions = " OR ".join([
+            f"""(
+                LOWER(p.category) LIKE '%{term.lower()}%'
+                OR LOWER(p.sub_category) LIKE '%{term.lower()}%'
+                OR '{term.lower()}' LIKE '%' || LOWER(p.sub_category) || '%'
+            )"""
+            for term in category_terms
+        ])
+        comp_query += f" AND ({category_conditions})"
+
     if geography != "all":
-        comp_query += f" AND cp.geography = '{geography}'"
+        comp_query += f"""
+            AND LOWER(cp.geography) LIKE '%{geography.lower()}%'
+        """
 
     comp_df = spark.sql(comp_query)
     context["competitor_prices"] = comp_df.toPandas().to_dict(
@@ -1464,7 +1527,9 @@ def build_promotion_context(
         WHERE 1=1
     """
     if geography != "all":
-        seg_query += f" AND geography = '{geography}'"
+        seg_query += f"""
+            AND LOWER(geography) LIKE '%{geography.lower()}%'
+        """
 
     seg_df = spark.sql(seg_query)
     context["customer_segments"] = seg_df.toPandas().to_dict(
@@ -1493,7 +1558,10 @@ def build_promotion_context(
                 current_date(), 120)
     """
     if geography != "all":
-        hol_query += f" AND geography = '{geography}'"
+        hol_query += f"""
+            AND LOWER(geography) LIKE '%{geography.lower()}%'
+        """
+
     if event:
         hol_query += f"""
             AND LOWER(event_name)
@@ -1531,10 +1599,36 @@ def build_promotion_context(
         FROM benchmark_elasticity
         WHERE 1=1
     """
-    if category != "all":
-        bench_query += f"""
-            AND category IN ('{category}', 'all')
-        """
+
+    if category != "all" and category != ["all"]:
+        if isinstance(category, list):
+            category_terms = category
+        else:
+            category_terms = [category]
+
+        # Pre-fetch parent categories in Python
+        # Avoids nested subquery issues in Spark SQL
+        parent_categories = set()
+        for term in category_terms:
+            rows = spark.sql(f"""
+                SELECT DISTINCT category FROM products
+                WHERE LOWER(sub_category) LIKE '%{term.lower()}%'
+                OR LOWER(category) LIKE '%{term.lower()}%'
+                OR '{term.lower()}' LIKE '%' || LOWER(sub_category) || '%'
+                OR '{term.lower()}' LIKE '%' || LOWER(category) || '%'
+            """).collect()
+            for row in rows:
+                parent_categories.add(row["category"])
+
+        if parent_categories:
+            cats = "', '".join(parent_categories)
+            bench_query += f"""
+                AND (category IN ('{cats}')
+                OR category = 'global')
+            """
+        else:
+            bench_query += " AND category = 'global'"
+
     if geography != "all":
         bench_query += f"""
             AND geography IN ('{geography}', 'global')
@@ -1566,10 +1660,23 @@ def build_promotion_context(
             FROM products p
             JOIN inventory_status i
               ON p.sku_id = i.sku_id
-            WHERE p.category = '{category}'
-            AND   p.geography = '{geography}'
-            ORDER BY p.brand, i.days_cover DESC
+            WHERE p.geography = '{geography}'
         """
+        if category != "all" and category != ["all"]:
+            if isinstance(category, list):
+                category_terms = category
+            else:
+                category_terms = [category]
+            category_conditions = " OR ".join([
+                f"""(
+                    LOWER(p.category) LIKE '%{term.lower()}%'
+                    OR LOWER(p.sub_category) LIKE '%{term.lower()}%'
+                )"""
+                for term in category_terms
+            ])
+            rel_query += f" AND ({category_conditions})"
+        rel_query += " ORDER BY p.brand, i.days_cover DESC"
+
         rel_df = spark.sql(rel_query)
         context["product_relationships"] = \
             rel_df.toPandas().to_dict(orient="records")
@@ -1662,14 +1769,15 @@ def get_llm_decisions(
 
     IMPORTANT EDGE CASES:
     If the requested brand or product is not
-    in the catalog or no products have positive
-    net gain:
+    in the catalog:
     Set selected_skus to []
     Set clarification_needed to true
-    Set clarification_question to a clear message:
-        - State what went wrong
+    Set clarification_question to explain:
+        - That the specific brand/product was not found
+        - What IS available in the same category/geography
         - Ask what the manager wants to do next
-        - Offer 2-3 specific options
+    Do not suggest adjusting budgets or constraints
+    unless those were actually the problem.
     Do not generate an empty plan.
     """
 
@@ -1730,26 +1838,20 @@ def run_promotion_planner(user_request: str) -> str:
     # CALL 1: Parse scope
     scope = parse_scope(user_request)
 
-    if scope.get("goal") == "unknown":
-        return """
-Got it. One question before I build your plan:
-
-What are you trying to achieve with this promotion?
-Describe it in your own words.
-"""
-
     time.sleep(2)
 
     # STAGE 1: PySpark fetches data
     context = build_promotion_context(
-        category=scope.get("category", "all"),
+        category=scope.get("category", ["all"]),
         geography=scope.get("geography", "all"),
         event=scope.get("event"),
         currency=scope.get("currency", "INR")
     )
-    context["goal"] = scope.get("goal")
+    context["goal"]             = scope.get("goal")
+    context["goal_inferred"]    = scope.get("goal_inferred", "false")
+    context["inference_reason"] = scope.get("inference_reason")
     context["constraints"]["marketing_budget"] = \
-        scope.get("marketing_budget") or 0    
+        scope.get("marketing_budget") or 0
 
     # STAGE 1b: PySpark calculates simulation
     print("\nRunning simulation...")
