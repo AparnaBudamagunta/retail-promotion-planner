@@ -23,16 +23,12 @@ THREE RULES:
    Never infer the goal from the data.
    Data tells you what is available.
    The manager's words tell you what they want.
-   If the goal is not clear from their words
-   ask one question before building the plan.
+   If the goal is not clear from their words ask one question before building the plan.
 
 2. DATA ACCURACY
-   Every value in your plan must come directly
-   from the data or pre-calculated simulation.
-   This includes numbers, text fields, labels
-   and categorisations provided in the data.
-   Never recalculate, reword or reinterpret
-   any value that already exists in the data.
+   Every value in your plan must come directly from the data or pre-calculated simulation.
+   This includes numbers, text fields, labels and categorisations provided in the data.
+   Never recalculate, reword or reinterpret any value that already exists in the data.
    Use it exactly as it appears.
 
 3. HONEST REASONING
@@ -40,46 +36,84 @@ THREE RULES:
    Never pretend a problem does not exist.
 
 PRODUCT SELECTION:
-   If manager named a specific product
-   build the plan around that product only.
+   If manager named a specific product build the plan around that product only.
    Respect the manager's choice.
-   Only flag a concern if there is a genuine
-   hard reason — zero stock, margin breach.
+   Only flag a concern if there is a genuine hard reason — zero stock, margin breach.
 
-   If manager named only a category
-   recommend the best 2-3 products from
-   the simulation results.
+   If manager named only a category recommend the best 2-3 products from the simulation results.
    Use net gain and goal alignment to decide.
-   Exclude products where simulation shows
-   net gain is negative across all scenarios
-   or stock is too low to sustain a promotion.
+   Exclude products where simulation shows net gain is negative across all scenarios or stock is too low to sustain a promotion.
    State the reason for any exclusion clearly.
 
 SEGMENT DIFFERENTIATION:
    Never apply the same discount to all segments.
-   Use the discount range from the simulation
-   (comp_discount to max_discount) to assign
-   different offers per segment.
-   Base the differentiation on each segment is
-   price_sensitivity and discount_response
-   from the segment data provided.
-   Higher sensitivity deeper in the range.
-   Lower sensitivity shallower or non-price offer.
-   Lapsed segment reactivation offer.
-   Premium segment non-price offer where possible.
+   Use the discount range from the simulation (comp_discount to max_discount) to assign different offers per segment.
+   Base the differentiation on each segment's price_sensitivity and discount_response from the segment data provided.
+   Higher sensitivity → deeper in the range.
+   Lower sensitivity → shallower or non-price offer.
+   Lapsed segment → reactivation offer.
+   Premium segment → non-price offer where possible.
 
-OUTPUT SECTIONS:
+OUTPUT SECTIONS — what belongs in each:
 
 SECTION 1 - RECOMMENDATION
+   The promotion verdict and product table.
+   Which products, which discounts, which mechanism.
+   Segment-specific discount summary.
+   Marketing budget allocation.
+   Expected net gain in base scenario.
+
 SECTION 2 - PRODUCT REASONING
+   State how many products were evaluated total.
+   State in one sentence what criteria excluded the rest — do not list every excluded product.
+   Then give full reasoning for each SELECTED product only — stock, margin, net gain, goal fit.
+   Tie every reason back to the manager's goal.
+   End with: "Full exclusion details available on request."
+
 SECTION 3 - P&L SIMULATION
+   Financial scenarios from pre-calculated simulation.
+   Pessimistic, base, optimistic for each product.
+   Use numbers exactly as provided — never recalculate.
+   Flag stock ceiling if hit.
+
 SECTION 4 - CONSTRAINT VALIDATION
+   Check each hard constraint explicitly.
+   Minimum margin, max discount, marketing budget, stock availability.
+   Show PASS or FAIL for each.
+
 SECTION 5 - CANNIBALIZATION RISK
+   Internal cannibalization only.
+   Which of OUR OWN products might lose sales because customers switch to the promoted product.
+   Use cannibalization_rate from benchmarks.
+   Estimate units lost from non-promoted own products.
+   Show net category impact.
+   Competitor impact does NOT belong here.
+
 SECTION 6 - SEGMENT PLAYBOOK
+   One row per customer segment.
+   Different offer per segment based on price_sensitivity and discount_response.
+   Include mechanism, channel, messaging, KPI.
+
 SECTION 7 - COMPETITOR CONTEXT
+   External competitor pricing only.
+   Show our price vs each competitor for promoted products only.
+   Use position field exactly as in the data.
+   Do not include excluded products here.
+
 SECTION 8 - EXECUTION CHECKLIST
+   Operational steps before, during, after.
+   Specific to this promotion — not generic.
+   Include dates from event calendar.
+
 SECTION 9 - AI REASONING SUMMARY
-SECTION 10 - BETTER ALTERNATIVE
+   Why these specific decisions were made.
+   Tie every decision back to the goal identified from the manager's words.
+   Reference the data that drove each choice.
+
+SECTION 10 - BETTER ALTERNATIVE (if applicable)
+   Only include if a genuinely better option exists.
+   Must be supported by simulation data.
+   Not a generic suggestion.
 """
 
 
@@ -1356,7 +1390,7 @@ def parse_scope(user_request: str) -> dict:
 
     try:
         scope = json.loads(raw)
-        print(f"  ✅ Scope parsed:")
+        print(f"     Scope parsed:")
         print(f"     Category:  {scope.get('category')}")
         print(f"     Geography: {scope.get('geography')}")
         print(f"     Event:     {scope.get('event')}")
@@ -1705,7 +1739,7 @@ def build_promotion_context(
         "currency":        currency,
     }
 
-    print("\n✅ Context built successfully")
+    print("\n  Context built successfully")
     print(f"   Total data points: {sum([len(v) if isinstance(v, list) else 1 for v in context.values()])}")
     return context
 
@@ -1783,7 +1817,10 @@ def get_llm_decisions(
 
     response = completion(
         model="groq/qwen/qwen3.8-27b",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ],
         max_tokens=500,
         temperature=0.0
     )
@@ -1793,12 +1830,12 @@ def get_llm_decisions(
 
     try:
         decisions = json.loads(raw)
-        print(f"  ✅ Decisions received")
+        print(f"     Decisions received")
         print(f"     Selected: {decisions.get('selected_skus')}")
         print(f"     Goal: {decisions.get('goal_statement')}")
         return decisions
     except json.JSONDecodeError:
-        print(f"  ⚠️  Parse error — raw: {raw[:200]}")
+        print(f"  Parse error — raw: {raw[:200]}")
         # Fallback — use promoted products from simulation
         promoted = simulation.get("promoted_products", [])
         return {
@@ -1872,8 +1909,8 @@ def run_promotion_planner(user_request: str) -> str:
     if not simulation.get("simulation_possible"):
         return f"Cannot run simulation: {simulation.get('reason')}"
 
-    print(f"  ✅ {len(simulation['simulations'])} products simulated")
-    print(f"  ✅ {len(simulation['promoted_products'])} promotion candidates")
+    print(f"  {len(simulation['simulations'])} products simulated")
+    print(f"  {len(simulation['promoted_products'])} promotion candidates")
 
     time.sleep(2)
 
