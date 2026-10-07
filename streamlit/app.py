@@ -470,7 +470,7 @@ for msg in st.session_state["messages"]:
 # ── CHAT INPUT ─────────────────────────────────────────────────
 prefill = st.session_state.pop("prefill", "")
 prompt  = st.chat_input(
-    "Describe your promotion — product, region, event, budget..."
+    "e.g. DMart is undercutting us on Coca-Cola in India ahead of Diwali. Budget is 10,000 INR. Help me respond."
 ) or prefill
 
 if prompt:
