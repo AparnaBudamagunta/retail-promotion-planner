@@ -227,7 +227,8 @@ Job ID = 28161186495029
 This is the end-to-end connection flow:
 
   Manager types request in Streamlit
-        ↓
+
+  
   Streamlit sends POST request to Databricks Jobs API:
   POST /api/2.1/jobs/run-now
   {
@@ -236,17 +237,20 @@ This is the end-to-end connection flow:
       "user_request": "manager's plain English prompt"
     }
   }
-        ↓
+
+  
   Databricks runs 03_api_runner.ipynb which:
     - Reads user_request from widget
     - Loads engine.py via exec()
     - Calls run_promotion_planner(user_request)
     - Returns plan via dbutils.notebook.exit(plan)
-        ↓
+
+    
   Streamlit polls every 10 seconds:
   GET /api/2.1/jobs/runs/get-output?run_id=<run_id>
   until job status = SUCCESS
-        ↓
+
+
   Streamlit extracts plan from notebook output
   and displays it as markdown
   
