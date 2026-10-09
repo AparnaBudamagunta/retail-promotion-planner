@@ -196,11 +196,61 @@ Upload `01_data_setup.ipynb` to Databricks and run all cells. This creates the 6
 
 Upload `02_ai_engine.ipynb` to Databricks and run all cells. This exports `engine.py`.
 
-**5. Create Databricks job**
+**5. Get your Databricks Personal Access Token**
 
-Create a job pointing to `03_api_runner.ipynb`. Note the Job ID.
+Databricks UI:
+  Top right → Your name → Settings → Developer
+  → Access tokens → Generate new token
+  → Copy immediately — shows only once
+  
+**6. Create Databricks job**
+Databricks UI:
+  Left sidebar → Workflows → Jobs → Create Job
 
-**6. Configure Streamlit**
+Configure:
+  Name:          promotion-planner-job
+  Task type:     Notebook
+  Notebook path: /Workspace/Users/<your-email>/
+                 retail-promotion-planner/03_api_runner
+  Cluster:       Serverless
+
+Parameters:
+  Key:   user_request
+  Value: (leave empty — Streamlit passes this at runtime)
+
+Save the job. Note the Job ID from the URL.
+Example: https://...azuredatabricks.net/jobs/28161186495029
+Job ID = 28161186495029
+
+**7. How Streamlit Connects To Databricks**
+
+This is the end-to-end connection flow:
+
+  Manager types request in Streamlit
+        ↓
+  Streamlit sends POST request to Databricks Jobs API:
+  POST /api/2.1/jobs/run-now
+  {
+    "job_id": JOB_ID,
+    "notebook_params": {
+      "user_request": "manager's plain English prompt"
+    }
+  }
+        ↓
+  Databricks runs 03_api_runner.ipynb which:
+    - Reads user_request from widget
+    - Loads engine.py via exec()
+    - Calls run_promotion_planner(user_request)
+    - Returns plan via dbutils.notebook.exit(plan)
+        ↓
+  Streamlit polls every 10 seconds:
+  GET /api/2.1/jobs/runs/get-output?run_id=<run_id>
+  until job status = SUCCESS
+        ↓
+  Streamlit extracts plan from notebook output
+  and displays it as markdown
+  
+**8. Configure Streamlit**
 
 In `streamlit/app.py` update:
 ```python
@@ -209,7 +259,7 @@ DATABRICKS_TOKEN = "your_pat_token"
 JOB_ID = your_job_id
 ```
 
-**7. Run Streamlit**
+**9. Run Streamlit**
 ```bash
 cd streamlit
 pip install streamlit requests
